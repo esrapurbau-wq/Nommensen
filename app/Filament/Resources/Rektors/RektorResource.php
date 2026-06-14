@@ -12,6 +12,14 @@ use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use UnitEnum;
 
 class RektorResource extends Resource
@@ -27,14 +35,85 @@ class RektorResource extends Resource
     protected static ?int $navigationSort = 4;
 
     public static function form(Schema $schema): Schema
-    {
-        return RektorForm::configure($schema);
-    }
+{
+    return $schema
+        ->schema([
+            TextInput::make('nama')
+                ->label('Nama Lengkap')
+                ->required()
+                ->maxLength(255)
+                ->placeholder('contoh: Prof. Dr. H. Maman Suherman, M.Pd.'),
+
+            TextInput::make('jabatan')
+                ->label('Jabatan')
+                ->required()
+                ->maxLength(255)
+                ->placeholder('contoh: Rektor / Wakil Rektor I / Wakil Rektor II')
+                ->helperText('Tuliskan jabatan struktural di pimpinan universitas.'),
+
+            FileUpload::make('image')
+                ->label('Foto')
+                ->image()
+                ->directory('rektors')
+                ->visibility('public')
+                ->imagePreviewHeight('200')
+                ->maxSize(2048)
+                ->required()
+                ->helperText('Upload foto formal dengan latar polos. Format: JPG, PNG. Maks 2MB.')
+                ->columnSpanFull(),
+        ])
+        ->columns(2);
+}
 
     public static function table(Table $table): Table
-    {
-        return RektorsTable::configure($table);
-    }
+{
+    return $table
+        ->columns([
+            ImageColumn::make('image')
+                ->label('Foto')
+                ->disk('public')
+                ->height(80)
+                ->circular(),
+
+            TextColumn::make('nama')
+                ->label('Nama Lengkap')
+                ->searchable()
+                ->sortable()
+                ->weight('bold'),
+
+            TextColumn::make('jabatan')
+                ->label('Jabatan')
+                ->searchable()
+                ->sortable()
+                ->badge()
+                ->color('warning'),
+
+            TextColumn::make('created_at')
+                ->label('Ditambahkan')
+                ->dateTime('d M Y H:i')
+                ->sortable()
+                ->toggleable(isToggledHiddenByDefault: true),
+
+            TextColumn::make('updated_at')
+                ->label('Diperbarui')
+                ->dateTime('d M Y H:i')
+                ->sortable()
+                ->toggleable(isToggledHiddenByDefault: true),
+        ])
+        ->filters([
+            //
+        ])
+        ->actions([
+            EditAction::make(),
+            DeleteAction::make(),
+        ])
+        ->bulkActions([
+            BulkActionGroup::make([
+            DeleteBulkAction::make(),
+            ]),
+        ])
+        ->defaultSort('id', 'asc');
+}
 
     public static function getRelations(): array
     {
